@@ -189,9 +189,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           userData = {
             id: supabaseUser.id,
             email: email,
-            role: role,
+            role: role as any,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
+            address: null,
+            company: null,
+            full_name: email.split('@')[0] || 'User',
+            last_sign_in_at: null,
+            phone: null,
             metadata: { 
               firstName: email.split('@')[0] || 'User', 
               lastName: 'User',
@@ -208,9 +213,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         userData = {
           id: supabaseUser.id,
           email: email,
-          role: role,
+          role: role as any,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+          address: null,
+          company: null,
+          full_name: email.split('@')[0] || 'User',
+          last_sign_in_at: null,
+          phone: null,
           metadata: { 
             firstName: email.split('@')[0] || 'User', 
             lastName: 'User',
@@ -219,9 +229,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
       }
 
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || !userData) return;
 
       console.log('✅ User data loaded successfully:', userData);
+      console.log('🔍 User metadata from database:', userData.metadata);
 
       // Now load businesses separately to avoid complex joins
       console.log('🏢 Loading user businesses...');
@@ -242,16 +253,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.warn('⚠️ Failed to load businesses (continuing anyway):', businessErr);
       }
 
+      // Ensure metadata is properly handled and preserved
+      const userMetadata = userData.metadata || {};
+      console.log('📋 Processing metadata:', userMetadata);
+      
+      // Also check Supabase auth user metadata as fallback
+      const supabaseAuthMetadata = supabaseUser.user_metadata || {};
+      console.log('🔐 Supabase auth metadata:', supabaseAuthMetadata);
+      
+      // Merge metadata with auth metadata as fallback
+      const finalMetadata = {
+        ...supabaseAuthMetadata,
+        ...userMetadata
+      };
+      console.log('🔗 Final merged metadata:', finalMetadata);
+
       const authUser: AuthUser = {
         id: userData.id,
         email: userData.email,
         role: userData.role,
         created_at: userData.created_at,
         updated_at: userData.updated_at,
-        metadata: userData.metadata || {},
+        metadata: finalMetadata,
         businesses: businesses
       };
 
+      console.log('✅ Setting user with metadata:', authUser.metadata);
+      console.log('🖼️ Avatar URL in metadata:', authUser.metadata.avatarUrl);
       setUser(authUser);
 
       // Set current business if user has businesses
@@ -433,7 +461,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           .insert({
             name: businessName,
             owner_id: data.user.id,
-            settings: {}
+            settings: '{}'
           })
           .select()
           .single();
@@ -463,7 +491,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
       
       // Clear any cached data
-      localStorage.removeItem('sb-' + supabase.supabaseUrl.split('//')[1] + '-auth-token');
+      localStorage.removeItem('supabase-auth-token');
       
     } catch (error) {
       console.error('🚨 Error during sign out:', error);
@@ -477,9 +505,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const switchBusiness = (businessId: string) => {
     if (user) {
-      const userBusiness = user.businesses.find(ub => ub.business_id === businessId);
+      const userBusiness = user.businesses.find(business => business.id === businessId);
       if (userBusiness) {
-        setCurrentBusiness(userBusiness.business);
+        setCurrentBusiness(userBusiness);
+        console.log('✅ Switched to business:', userBusiness.name);
+      } else {
+        console.warn('⚠️ Business not found:', businessId);
       }
     }
   };
@@ -490,8 +521,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Admin has all permissions
     if (user.role === 'admin') return true;
 
-    // Get user's role in current business
-    const userBusiness = user.businesses.find(ub => ub.business_id === currentBusiness.id);
+    // Check if user has access to current business
+    const userBusiness = user.businesses.find(business => business.id === currentBusiness.id);
     if (!userBusiness) return false;
 
     // Business owner has all permissions for their business
@@ -499,7 +530,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Check specific permissions based on role
     const userRole = user.role;
-    const businessRole = userBusiness.role;
+    // For owned businesses, the user role is the business role
+    const businessRole = userRole;
 
     // Define role-based permissions
     const rolePermissions: Record<string, Record<string, string[]>> = {
@@ -530,6 +562,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return resourcePermissions.includes(action) || resourcePermissions.includes('*');
   };
 
+  const refreshUserData = async () => {
+    if (user?.id) {
+      console.log('🔄 Refreshing user data...');
+      await loadUserData({ id: user.id, email: user.email } as SupabaseUser);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     currentBusiness,
@@ -540,6 +579,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signOut,
     switchBusiness,
     hasPermission,
+    refreshUserData,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
