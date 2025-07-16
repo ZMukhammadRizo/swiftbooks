@@ -153,20 +153,20 @@ export function useBusinessPermissions(businessId?: string) {
 
   const isOwner = useMemo(() => {
     if (!user || !targetBusiness) return false;
-    return user.businesses?.some(
-      b => b.business_id === targetBusiness && b.role === 'owner'
-    ) || false;
+    // User owns the business if it's in their businesses list (since we only load owned businesses)
+    return user.businesses?.some(b => b.id === targetBusiness) || false;
   }, [user, targetBusiness]);
 
   const businessRole = useMemo(() => {
     if (!user || !targetBusiness) return null;
-    const userBusiness = user.businesses?.find(b => b.business_id === targetBusiness);
-    return userBusiness?.role || null;
+    const userBusiness = user.businesses?.find(b => b.id === targetBusiness);
+    // For owned businesses, the user role is the business role
+    return userBusiness ? user.role : null;
   }, [user, targetBusiness]);
 
   const hasBusinessAccess = useMemo(() => {
     if (!user || !targetBusiness) return false;
-    return user.businesses?.some(b => b.business_id === targetBusiness) || false;
+    return user.businesses?.some(b => b.id === targetBusiness) || false;
   }, [user, targetBusiness]);
 
   return {

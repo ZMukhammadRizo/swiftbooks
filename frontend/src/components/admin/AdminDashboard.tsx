@@ -58,6 +58,9 @@ import { ViewBusinessModal } from '@/components/modals/ViewBusinessModal';
 import { ManageBusinessModal } from '@/components/modals/ManageBusinessModal';
 import { ExportBusinessModal } from '@/components/modals/ExportBusinessModal';
 
+// Import admin sections
+import { AdminBusinesses } from './sections/AdminBusinesses';
+
 // Real data interfaces
 interface SystemMetrics {
   totalUsers: number;
@@ -889,80 +892,7 @@ export const AdminDashboard: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="businesses" className="space-y-6">
-            {/* Businesses Header */}
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Business Management</h2>
-                <p className="text-gray-600">Monitor all businesses on the platform</p>
-              </div>
-              <div className="flex space-x-2">
-                <ExportBusinessModal businesses={businesses} />
-                <AddBusinessModal onBusinessAdded={loadBusinesses} />
-              </div>
-            </div>
-
-            {/* Businesses Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {businesses.length === 0 ? (
-                <div className="col-span-2 text-center py-12">
-                  <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No businesses found</p>
-                </div>
-              ) : (
-                businesses.map((business) => (
-                <Card key={business.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-lg">{business.name}</CardTitle>
-                          <CardDescription>
-                            Owner: {business.owner} • {business.industry}
-                          </CardDescription>
-                      </div>
-                      <Badge className={getStatusColor(business.status)}>
-                        {business.status}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500">Revenue</p>
-                          <p className="font-bold text-green-600">
-                            {formatCurrency(business.revenue)}
-                          </p>
-                      </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Transactions</p>
-                          <p className="font-medium">{business.transactionCount}</p>
-                      </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500">Created</p>
-                          <p className="font-medium">{formatDate(business.createdDate)}</p>
-                      </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Last Activity</p>
-                          <p className="font-medium">{formatDate(business.lastActivity)}</p>
-                      </div>
-                      </div>
-                      {business.subscription && (
-                        <div>
-                          <Badge className={getStatusColor(business.subscription)}>
-                            {business.subscription} plan
-                        </Badge>
-                        </div>
-                      )}
-                      <div className="flex space-x-2 pt-2">
-                        <ViewBusinessModal business={business} />
-                        <ManageBusinessModal business={business} onBusinessUpdated={loadBusinesses} />
-                    </div>
-                  </CardContent>
-                </Card>
-                ))
-              )}
-            </div>
+            <AdminBusinesses />
           </TabsContent>
 
           <TabsContent value="financial" className="space-y-6">

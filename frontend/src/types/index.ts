@@ -1,5 +1,5 @@
 // User and Authentication Types
-export type UserRole = 'client' | 'accountant' | 'admin';
+export type UserRole = 'client' | 'user' | 'accountant' | 'admin';
 
 export interface User {
   id: string;
@@ -11,7 +11,7 @@ export interface User {
 }
 
 export interface AuthUser extends User {
-  businesses: UserBusiness[];
+  businesses: Business[];
 }
 
 export interface UserBusiness {
@@ -28,9 +28,13 @@ export interface Business {
   id: string;
   name: string;
   owner_id: string;
-  created_at: string;
-  updated_at: string;
-  settings?: Record<string, any>;
+  address?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  status?: string | null;
+  type?: string | null;
+  monthly_fee?: number | null;
+  settings?: string | null;
 }
 
 export interface Permission {
@@ -192,6 +196,7 @@ export interface AuthContext {
   signOut: () => Promise<void>;
   switchBusiness: (businessId: string) => void;
   hasPermission: (resource: string, action: string) => boolean;
+  refreshUserData?: () => Promise<void>;
 }
 
 // Form Types

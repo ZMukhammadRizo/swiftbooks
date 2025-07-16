@@ -1,7 +1,7 @@
 // Role-Based Access Control (RBAC) Library
 // Defines permissions, roles, and access control utilities for SwiftBooks
 
-export type UserRole = 'client' | 'accountant' | 'admin';
+export type UserRole = 'client' | 'user' | 'accountant' | 'admin';
 export type Permission = 'create' | 'read' | 'update' | 'delete' | '*';
 export type Resource = 
   | 'financial_data'
